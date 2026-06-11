@@ -1,6 +1,6 @@
 'use client'
 
-import { Sun, Moon, CheckSquare, Menu, LogOut, User } from 'lucide-react'
+import { Sun, Moon, CheckSquare, Menu, LogOut } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'

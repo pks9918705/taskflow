@@ -32,11 +32,13 @@ export function useTasksQuery(filters: TaskFilters) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const { status, priority, search, sortBy, sortOrder, page, limit } = filters
+
   const fetchTasks = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const response: PaginatedResponse<Task> = await getTasks(filters)
+      const response: PaginatedResponse<Task> = await getTasks({ status, priority, search, sortBy, sortOrder, page, limit })
       setTasks(response.data)
       setMeta(response.meta)
     } catch (err) {
@@ -45,15 +47,7 @@ export function useTasksQuery(filters: TaskFilters) {
     } finally {
       setIsLoading(false)
     }
-  }, [
-    filters.status,
-    filters.priority,
-    filters.search,
-    filters.sortBy,
-    filters.sortOrder,
-    filters.page,
-    filters.limit,
-  ])
+  }, [status, priority, search, sortBy, sortOrder, page, limit])
 
   useEffect(() => {
     fetchTasks()

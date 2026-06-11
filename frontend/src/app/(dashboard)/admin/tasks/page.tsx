@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/use-toast'
 import { getAdminTasks } from '@/services/admin.service'
 import type { Task, TaskFilters } from '@/types'
 import type { ApiError } from '@/types'
-import { useState as useStateLocal } from 'react'
 
 function useAdminTasks(filters: TaskFilters) {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -24,11 +23,13 @@ function useAdminTasks(filters: TaskFilters) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const { status, priority, search, sortBy, sortOrder, page, limit } = filters
+
   const fetchTasks = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await getAdminTasks(filters)
+      const res = await getAdminTasks({ status, priority, search, sortBy, sortOrder, page, limit })
       setTasks(res.data)
       setMeta(res.meta)
     } catch (err) {
@@ -37,15 +38,7 @@ function useAdminTasks(filters: TaskFilters) {
     } finally {
       setIsLoading(false)
     }
-  }, [
-    filters.status,
-    filters.priority,
-    filters.search,
-    filters.sortBy,
-    filters.sortOrder,
-    filters.page,
-    filters.limit,
-  ])
+  }, [status, priority, search, sortBy, sortOrder, page, limit])
 
   useEffect(() => {
     fetchTasks()

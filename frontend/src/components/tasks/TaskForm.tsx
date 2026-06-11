@@ -25,7 +25,6 @@ import { useToast } from '@/hooks/use-toast'
 import { useCreateTask, useUpdateTask } from '@/hooks/useTasks'
 import {
   createTaskSchema,
-  updateTaskSchema,
   type CreateTaskFormInput,
 } from '@/lib/validators/task.schema'
 import type { Task } from '@/types'
@@ -44,7 +43,7 @@ export function TaskForm({ task, onSuccess }: TaskFormProps) {
   const isLoading = isCreating || isUpdating
 
   const form = useForm<CreateTaskFormInput>({
-    resolver: zodResolver(isEditMode ? updateTaskSchema : createTaskSchema),
+    resolver: zodResolver(createTaskSchema),
     defaultValues: isEditMode
       ? {
           title: task.title,
