@@ -14,7 +14,11 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        window.location.href = '/login'
+        const authRoutes = ['/login', '/signup']
+        const isAuthRoute = authRoutes.some((r) => window.location.pathname.startsWith(r))
+        if (!isAuthRoute) {
+          window.location.href = '/login'
+        }
       }
     }
     const apiError: ApiError =
