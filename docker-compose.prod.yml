@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: ${DOCKERHUB_USERNAME}/taskflow-api:latest
+    image: chatgpt2103/taskflow-api:latest
     container_name: taskflow-api
     ports:
       - '4000:4000'
@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ${DOCKERHUB_USERNAME}/taskflow-web:latest
+    image: chatgpt2103/taskflow-web:latest
     container_name: taskflow-web
     ports:
       - '3000:3000'
