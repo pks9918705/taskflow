@@ -34,3 +34,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# claude code (local session config, not for version control)
+.claude/
+
+# os
+Thumbs.db
