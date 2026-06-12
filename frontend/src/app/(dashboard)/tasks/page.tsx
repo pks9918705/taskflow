@@ -11,10 +11,10 @@ import { TaskSearch } from '@/components/tasks/TaskSearch'
 import { TaskFiltersBar } from '@/components/tasks/TaskFilters'
 import { TaskSort } from '@/components/tasks/TaskSort'
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog'
-import { useTasksQuery, useDeleteTask } from '@/hooks/useTasks'
+import { useTasksQuery, useDeleteTask, useUpdateTask } from '@/hooks/useTasks'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useToast } from '@/hooks/use-toast'
-import type { Task, TaskFilters } from '@/types'
+import type { Task, TaskFilters, TaskStatus } from '@/types'
 import type { ApiError } from '@/types'
 
 function buildFilters(params: URLSearchParams): TaskFilters {
@@ -46,8 +46,9 @@ export default function TasksPage() {
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const { tasks, meta, isLoading, error, refetch } = useTasksQuery(filters)
+  const { tasks, meta, isLoading, error, refetch, optimisticRemove, optimisticPatch } = useTasksQuery(filters)
   const { mutate: deleteTask } = useDeleteTask()
+  const { mutate: updateTask } = useUpdateTask()
 
   useEffect(() => {
     setFilters((prev) => ({
@@ -72,22 +73,45 @@ export default function TasksPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return
     setIsDeleting(true)
+    setDeleteTarget(null)
+
+    // 1. Optimistically remove from UI immediately
+    const rollback = optimisticRemove(deleteTarget.id)
+
     try {
       await deleteTask(deleteTarget.id)
       toast({ title: 'Task deleted' })
-      refetch()
-      setDeleteTarget(null)
     } catch (err) {
+      // 2. API failed — restore the removed task
+      rollback()
       const apiErr = err as ApiError
       toast({
-        title: 'Error',
-        description: apiErr.message ?? 'Failed to delete task',
+        title: 'Could not delete task',
+        description: apiErr.message ?? 'Please try again',
         variant: 'destructive',
       })
     } finally {
       setIsDeleting(false)
     }
-  }, [deleteTarget, deleteTask, refetch, toast])
+  }, [deleteTarget, deleteTask, optimisticRemove, toast])
+
+  const handleStatusChange = useCallback(async (task: Task, next: TaskStatus) => {
+    // 1. Optimistically update the badge on the card immediately
+    const rollback = optimisticPatch(task.id, { status: next })
+
+    try {
+      await updateTask(task.id, { status: next })
+    } catch (err) {
+      // 2. API failed — restore old status
+      rollback()
+      const apiErr = err as ApiError
+      toast({
+        title: 'Could not update status',
+        description: apiErr.message ?? 'Please try again',
+        variant: 'destructive',
+      })
+    }
+  }, [optimisticPatch, updateTask, toast])
 
   const totalPages = meta?.totalPages ?? 1
   const currentPage = filters.page ?? 1
@@ -148,6 +172,7 @@ export default function TasksPage() {
         isLoading={isLoading}
         onEdit={(task) => router.push(`/tasks/${task.id}/edit`)}
         onDelete={(task) => setDeleteTarget(task)}
+        onStatusChange={handleStatusChange}
       />
 
       {!isLoading && total > 0 && (

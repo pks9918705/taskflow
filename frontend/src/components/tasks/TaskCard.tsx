@@ -7,16 +7,23 @@ import { Card, CardContent } from '@/components/ui/card'
 import { TaskStatusBadge } from './TaskStatusBadge'
 import { TaskPriorityBadge } from './TaskPriorityBadge'
 import { formatDate, isOverdue, cn } from '@/lib/utils'
-import type { Task } from '@/types'
+import type { Task, TaskStatus } from '@/types'
+
+const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
+  PENDING: 'IN_PROGRESS',
+  IN_PROGRESS: 'DONE',
+  DONE: 'PENDING',
+}
 
 interface TaskCardProps {
   task: Task
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onStatusChange?: (task: Task, next: TaskStatus) => void
   showOwner?: boolean
 }
 
-export function TaskCard({ task, onEdit, onDelete, showOwner }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onStatusChange, showOwner }: TaskCardProps) {
   const router = useRouter()
   const overdue = task.dueDate && task.status !== 'DONE' && isOverdue(task.dueDate)
 
@@ -50,7 +57,16 @@ export function TaskCard({ task, onEdit, onDelete, showOwner }: TaskCardProps) {
 
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <TaskStatusBadge status={task.status} />
+            <button
+              title="Click to cycle status"
+              onClick={(e) => {
+                e.stopPropagation()
+                onStatusChange?.(task, STATUS_CYCLE[task.status])
+              }}
+              className="focus:outline-none rounded"
+            >
+              <TaskStatusBadge status={task.status} />
+            </button>
             {task.dueDate && (
               <span
                 className={cn(

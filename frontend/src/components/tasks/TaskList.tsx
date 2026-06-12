@@ -5,13 +5,14 @@ import { ClipboardList, Plus } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from './TaskCard'
-import type { Task } from '@/types'
+import type { Task, TaskStatus } from '@/types'
 
 interface TaskListProps {
   tasks: Task[]
   isLoading: boolean
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onStatusChange?: (task: Task, next: TaskStatus) => void
   showOwner?: boolean
 }
 
@@ -38,7 +39,7 @@ function TaskCardSkeleton() {
   )
 }
 
-export function TaskList({ tasks, isLoading, onEdit, onDelete, showOwner }: TaskListProps) {
+export function TaskList({ tasks, isLoading, onEdit, onDelete, onStatusChange, showOwner }: TaskListProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -75,6 +76,7 @@ export function TaskList({ tasks, isLoading, onEdit, onDelete, showOwner }: Task
           task={task}
           onEdit={onEdit}
           onDelete={onDelete}
+          onStatusChange={onStatusChange}
           showOwner={showOwner}
         />
       ))}

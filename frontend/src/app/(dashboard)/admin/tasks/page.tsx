@@ -11,10 +11,10 @@ import { TaskFiltersBar } from '@/components/tasks/TaskFilters'
 import { TaskSort } from '@/components/tasks/TaskSort'
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useDeleteTask } from '@/hooks/useTasks'
+import { useDeleteTask, useUpdateTask } from '@/hooks/useTasks'
 import { useToast } from '@/hooks/use-toast'
 import { getAdminTasks } from '@/services/admin.service'
-import type { Task, TaskFilters } from '@/types'
+import type { Task, TaskFilters, TaskStatus } from '@/types'
 import type { ApiError } from '@/types'
 
 function useAdminTasks(filters: TaskFilters) {
@@ -44,7 +44,25 @@ function useAdminTasks(filters: TaskFilters) {
     fetchTasks()
   }, [fetchTasks])
 
-  return { tasks, meta, isLoading, error, refetch: fetchTasks }
+  const optimisticRemove = useCallback(
+    (id: string): (() => void) => {
+      const snapshot = tasks
+      setTasks((prev) => prev.filter((t) => t.id !== id))
+      return () => setTasks(snapshot)
+    },
+    [tasks]
+  )
+
+  const optimisticPatch = useCallback(
+    (id: string, changes: Partial<Task>): (() => void) => {
+      const snapshot = tasks
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...changes } : t)))
+      return () => setTasks(snapshot)
+    },
+    [tasks]
+  )
+
+  return { tasks, meta, isLoading, error, refetch: fetchTasks, optimisticRemove, optimisticPatch }
 }
 
 export default function AdminTasksPage() {
@@ -68,8 +86,9 @@ export default function AdminTasksPage() {
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const { tasks, meta, isLoading, error, refetch } = useAdminTasks(filters)
+  const { tasks, meta, isLoading, error, refetch, optimisticRemove, optimisticPatch } = useAdminTasks(filters)
   const { mutate: deleteTask } = useDeleteTask()
+  const { mutate: updateTask } = useUpdateTask()
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, search: debouncedSearch || undefined, page: 1 }))
@@ -90,22 +109,40 @@ export default function AdminTasksPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return
     setIsDeleting(true)
+    setDeleteTarget(null)
+
+    const rollback = optimisticRemove(deleteTarget.id)
+
     try {
       await deleteTask(deleteTarget.id)
       toast({ title: 'Task deleted' })
-      refetch()
-      setDeleteTarget(null)
     } catch (err) {
+      rollback()
       const apiErr = err as ApiError
       toast({
-        title: 'Error',
-        description: apiErr.message ?? 'Failed to delete task',
+        title: 'Could not delete task',
+        description: apiErr.message ?? 'Please try again',
         variant: 'destructive',
       })
     } finally {
       setIsDeleting(false)
     }
-  }, [deleteTarget, deleteTask, refetch, toast])
+  }, [deleteTarget, deleteTask, optimisticRemove, toast])
+
+  const handleStatusChange = useCallback(async (task: Task, next: TaskStatus) => {
+    const rollback = optimisticPatch(task.id, { status: next })
+    try {
+      await updateTask(task.id, { status: next })
+    } catch (err) {
+      rollback()
+      const apiErr = err as ApiError
+      toast({
+        title: 'Could not update status',
+        description: apiErr.message ?? 'Please try again',
+        variant: 'destructive',
+      })
+    }
+  }, [optimisticPatch, updateTask, toast])
 
   const totalPages = meta?.totalPages ?? 1
   const currentPage = filters.page ?? 1
@@ -148,6 +185,7 @@ export default function AdminTasksPage() {
         showOwner
         onEdit={(task) => router.push(`/tasks/${task.id}/edit`)}
         onDelete={(task) => setDeleteTarget(task)}
+        onStatusChange={handleStatusChange}
       />
 
       {!isLoading && total > 0 && (

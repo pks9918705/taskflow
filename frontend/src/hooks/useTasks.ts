@@ -53,7 +53,28 @@ export function useTasksQuery(filters: TaskFilters) {
     fetchTasks()
   }, [fetchTasks])
 
-  return { tasks, meta, isLoading, error, refetch: fetchTasks }
+  // Snapshot current tasks → apply change → return rollback fn
+  const optimisticRemove = useCallback(
+    (id: string): (() => void) => {
+      const snapshot = tasks
+      setTasks((prev) => prev.filter((t) => t.id !== id))
+      return () => setTasks(snapshot)
+    },
+    [tasks]
+  )
+
+  const optimisticPatch = useCallback(
+    (id: string, changes: Partial<Task>): (() => void) => {
+      const snapshot = tasks
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...changes } : t))
+      )
+      return () => setTasks(snapshot)
+    },
+    [tasks]
+  )
+
+  return { tasks, meta, isLoading, error, refetch: fetchTasks, optimisticRemove, optimisticPatch }
 }
 
 export function useTaskQuery(id: string) {
