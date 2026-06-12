@@ -88,42 +88,42 @@ App runs at `http://localhost:3000`
 
 ---
 
-## Production Setup (Docker Compose)
+## Local Docker Setup
+
+If you prefer Docker over a manual Node.js setup, you can run the full stack locally with one command.
 
 ### Prerequisites
 
 - Docker & Docker Compose
 
-### 1. Clone and configure
+### 1. Clone the repository
 
 ```bash
 git clone <repo-url>
 cd OnlineAssignment
 ```
 
-> **Important:** Before starting, update the `JWT_SECRET` in `docker-compose.yml` to a strong random value. Do not use the default in production.
-
-### 2. Build and start all services
+### 2. Start all services
 
 ```bash
 docker compose up --build -d
 ```
 
-This starts three containers:
+This builds and starts three containers:
 
-| Container          | Port  | Description          |
-|--------------------|-------|----------------------|
-| `taskflow-postgres`| 5432  | PostgreSQL database  |
-| `taskflow-api`     | 4000  | NestJS REST API      |
-| `taskflow-web`     | 3000  | Next.js frontend     |
+| Container           | Port | Description         |
+|---------------------|------|---------------------|
+| `taskflow-postgres` | 5432 | PostgreSQL database |
+| `taskflow-api`      | 4000 | NestJS REST API     |
+| `taskflow-web`      | 3000 | Next.js frontend    |
 
-Prisma migrations run automatically when the API container starts.
+Prisma migrations run automatically on API startup.
 
 ### 3. Verify
 
 ```bash
-docker compose ps        # all containers should be "Up"
-docker compose logs api  # check for migration output
+docker compose ps         # all three containers should be "Up"
+docker compose logs api   # check for migration output and NestJS startup
 ```
 
 - App: `http://localhost:3000`
@@ -133,9 +133,11 @@ docker compose logs api  # check for migration output
 ### 4. Stop services
 
 ```bash
-docker compose down          # stop containers
-docker compose down -v       # stop and delete database volume
+docker compose down        # stop containers, keep database volume
+docker compose down -v     # stop containers and delete database volume
 ```
+
+> **Note:** The `JWT_SECRET` in `docker-compose.yml` is hardcoded for local use only. Never use it in production.
 
 ---
 
