@@ -177,6 +177,53 @@ CI runs on every push via GitHub Actions (`.github/workflows/`).
 
 ---
 
+## Live Demo (VPS Deployment)
+
+The app is deployed on a VPS using Docker Hub images and `docker-compose.prod.yml`.
+
+| Service  | URL |
+|----------|-----|
+| Frontend | http://187.127.151.48:3100 |
+| API      | http://187.127.151.48:4100/api |
+| Swagger  | http://187.127.151.48:4100/api/docs |
+
+> **Note:** The server runs over plain HTTP (no SSL certificate). Your browser may show a "Not Secure" warning — this is expected. The app is fully functional despite this warning.
+
+### Test Admin Credentials
+
+A pre-seeded admin account is available for testing:
+
+| Field    | Value |
+|----------|-------|
+| Email    | `admin@example.com` |
+| Password | `Admin@123` |
+
+---
+
+## Assumptions & Trade-offs
+
+### Authentication
+- JWT is stored in an **httpOnly cookie** rather than `localStorage` to prevent XSS attacks. The trade-off is that cookie-based auth requires correct CORS and `sameSite` configuration, which adds complexity in cross-origin deployments.
+- `sameSite` is set to `lax` on HTTP and `none` on HTTPS (controlled via `HTTPS` env var). This is a deliberate trade-off to support the current HTTP-only VPS deployment without breaking security semantics.
+- JWT expiry is set to 7 days with no refresh token. A refresh token mechanism would improve security but was out of scope.
+
+### Architecture
+- Follows a strict **Controller → Service → Repository** pattern. This adds boilerplate but keeps each layer independently testable and maintainable.
+- **Prisma** was chosen over raw SQL for type safety and migration management. The trade-off is slightly more abstraction overhead.
+- Admin role is assigned manually via database update rather than a self-registration flow, to prevent privilege escalation.
+
+### Deployment
+- Docker images are built in CI (GitHub Actions) and pushed to **Docker Hub**. The VPS pulls the latest image on deploy — no source code lives on the server.
+- `NEXT_PUBLIC_API_URL` is baked into the frontend image at build time (Next.js limitation). Changing the API URL requires a rebuild.
+- No SSL/TLS is configured. In a production-grade setup, an nginx reverse proxy with Let's Encrypt would be added in front of the containers.
+- The `.env` file on the VPS is managed manually via the hosting panel. A secrets manager (e.g. Vault, AWS Secrets Manager) would be more appropriate at scale.
+
+### Testing
+- Unit tests cover service-layer business logic (auth and tasks). Controllers and repositories are not tested separately — integration tests would be the right complement but were out of scope.
+- The frontend has no automated tests; manual testing via the browser was used instead.
+
+---
+
 ## Project Structure
 
 ```
