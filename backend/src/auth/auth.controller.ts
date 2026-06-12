@@ -22,10 +22,12 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { AuthUser } from './strategies/jwt.strategy';
 
+const IS_HTTPS = process.env['HTTPS'] === 'true';
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env['NODE_ENV'] === 'production',
-  sameSite: 'lax' as const,
+  secure: IS_HTTPS,
+  sameSite: (IS_HTTPS ? 'none' : 'lax') as 'none' | 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 };
