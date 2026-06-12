@@ -9,7 +9,7 @@ COPY prisma ./prisma
 RUN npx prisma generate
 
 COPY . .
-RUN npm run build
+RUN node node_modules/@nestjs/cli/bin/nest.js build
 
 FROM node:20-alpine AS production
 
@@ -27,4 +27,4 @@ COPY prisma.config.ts ./prisma.config.ts
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
