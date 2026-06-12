@@ -1,4 +1,9 @@
 
+# Environment files — never commit secrets
+.env
+.env.*
+!.env.example
+
 # Local reference / internal docs
 INFRASTRUCTURE.md
 DELETE_BUG_POSTMORTEM.md
