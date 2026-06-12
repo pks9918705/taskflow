@@ -1,4 +1,7 @@
 
-# Local reference docs
+# Local reference / internal docs
 INFRASTRUCTURE.md
 DELETE_BUG_POSTMORTEM.md
+CLAUDE.md
+**/CLAUDE.md
+**/OPTIMISTIC_UI.md
