@@ -100,8 +100,8 @@ export class TasksService {
       throw new ForbiddenException('You do not have access to this task');
     }
 
-    const deleted = await this.tasksRepository.delete(taskId);
     await this.activityService.log(taskId, userId, 'DELETED');
+    const deleted = await this.tasksRepository.delete(taskId);
     return deleted;
   }
 }
