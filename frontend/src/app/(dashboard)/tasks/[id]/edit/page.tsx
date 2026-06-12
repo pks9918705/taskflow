@@ -55,7 +55,7 @@ export default function EditTaskPage({ params }: EditTaskPageProps) {
         title="Edit Task"
         action={
           <Button variant="outline" asChild>
-            <Link href={`/tasks/${id}`}>
+            <Link href="/tasks">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
@@ -64,7 +64,7 @@ export default function EditTaskPage({ params }: EditTaskPageProps) {
       />
       <Card className="max-w-2xl">
         <CardContent className="pt-6">
-          <TaskForm task={task} onSuccess={() => router.push(`/tasks/${id}`)} />
+          <TaskForm task={task} onSuccess={() => router.push('/tasks')} />
         </CardContent>
       </Card>
     </div>
